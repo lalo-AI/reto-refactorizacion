@@ -16,6 +16,29 @@ contadorVentas = 0
 ultimo_error = ""
 MODO_DEBUG = False
 
+# ---------------------------------------------------------------
+# Reglas de precios: descuentos por volumen e IVA
+# ---------------------------------------------------------------
+UMBRAL_DESCUENTO_MAYOR = 1000
+TASA_DESCUENTO_MAYOR = 0.10
+UMBRAL_DESCUENTO_MEDIO = 500
+TASA_DESCUENTO_MEDIO = 0.05
+TASA_IVA = 0.16
+
+
+def _descuento_por_volumen(subtotal):
+    """Regresa el descuento por volumen que corresponde al subtotal."""
+    if subtotal >= UMBRAL_DESCUENTO_MAYOR:
+        return subtotal * TASA_DESCUENTO_MAYOR
+    if subtotal >= UMBRAL_DESCUENTO_MEDIO:
+        return subtotal * TASA_DESCUENTO_MEDIO
+    return 0
+
+
+def _calcular_iva(base):
+    """Regresa el IVA que corresponde a la base gravable."""
+    return base * TASA_IVA
+
 
 def reiniciar_sistema():
     """Borra todo el estado del sistema (inventario, ventas y folios)."""
@@ -113,14 +136,7 @@ def registrar_venta(codigo, cantidad, cliente=""):
     # calculo del subtotal
     aux = temp2["precio"] * cantidad
     # descuentos por volumen de compra
-    desc = 0
-    if aux >= 1000:
-        desc = aux * 0.10
-    else:
-        if aux >= 500:
-            desc = aux * 0.05
-        else:
-            desc = 0
+    desc = _descuento_por_volumen(aux)
     # los clientes cuyo codigo empieza con VIP tienen un extra,
     # pero solo si su compra (ya con descuento) pasa de cierto monto
     if cliente != "" and cliente is not None:
@@ -129,7 +145,7 @@ def registrar_venta(codigo, cantidad, cliente=""):
                 if aux - desc > 200:
                     desc = desc + aux * 0.02
     base = aux - desc
-    impuesto = base * 0.16
+    impuesto = _calcular_iva(base)
     total = round(base + impuesto, 2)
     # descontar del inventario
     temp2["stock"] = temp2["stock"] - cantidad
@@ -171,14 +187,9 @@ def cotizar(codigo, cantidad):
         ultimo_error = "cantidad invalida"
         return None
     aux = INVENTARIO[codigo]["precio"] * cantidad
-    desc = 0
-    if aux >= 1000:
-        desc = aux * 0.10
-    else:
-        if aux >= 500:
-            desc = aux * 0.05
+    desc = _descuento_por_volumen(aux)
     base = aux - desc
-    total = base + base * 0.16
+    total = base + _calcular_iva(base)
     return round(total, 2)
 
 
