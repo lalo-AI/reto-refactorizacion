@@ -139,11 +139,8 @@ def registrar_venta(codigo, cantidad, cliente=""):
     desc = _descuento_por_volumen(aux)
     # los clientes cuyo codigo empieza con VIP tienen un extra,
     # pero solo si su compra (ya con descuento) pasa de cierto monto
-    if cliente != "" and cliente is not None:
-        if len(cliente) >= 3:
-            if cliente[0:3] == "VIP":
-                if aux - desc > 200:
-                    desc = desc + aux * 0.02
+    if cliente and cliente.startswith("VIP") and aux - desc > 200:
+        desc = desc + aux * 0.02
     base = aux - desc
     impuesto = _calcular_iva(base)
     total = round(base + impuesto, 2)
